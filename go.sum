@@ -1,0 +1,3 @@
+module github.com/bradselph/Xbox-install-Removal
+
+go 1.24
