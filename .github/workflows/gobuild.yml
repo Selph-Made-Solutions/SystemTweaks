@@ -1,0 +1,42 @@
+name: Go Build (Windows)
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24'
+
+    - name: Build Binary
+      shell: bash
+      run: |
+        go build -v .
+        BIN_NAME="$(basename "$(find . -maxdepth 1 -type f -name '*.exe')" | head -n 1)"
+        echo "BINARY_NAME=$BIN_NAME" >> $GITHUB_ENV
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.BINARY_NAME }}
+        path: ./${{ env.BINARY_NAME }}
+
+    - name: Upload Release Asset
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./${{ env.BINARY_NAME }}
+        asset_name: ${{ env.BINARY_NAME }}
+        asset_content_type: application/octet-stream
